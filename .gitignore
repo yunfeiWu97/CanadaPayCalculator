@@ -1,0 +1,27 @@
+# Swift Package Manager and Xcode build products
+.build/
+.swiftpm/
+DerivedData/
+build/
+*.xcresult
+*.xcarchive
+*.ipa
+
+# Per-developer Xcode state and signing data
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+*.mobileprovision
+*.p12
+
+# Local editor / operating system state
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local verification artifacts
+verification-output/
+.validation/
+__pycache__/
