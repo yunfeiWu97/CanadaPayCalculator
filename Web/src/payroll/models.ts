@@ -17,9 +17,30 @@ export const contributionKeys = [
 export type ContributionKey = typeof contributionKeys[number];
 export type OptionalDeductions = Record<ContributionKey, Contribution>;
 
+export interface AdditionalEarnings {
+  controlledTips: { isEnabled: boolean; amount: string };
+  vacationPay: {
+    isEnabled: boolean;
+    mode: 'percentOfEligibleEarnings' | 'fixedPerPeriod';
+    amount: string;
+    includeControlledTips: boolean;
+  };
+  statHolidayPay: { isEnabled: boolean; amount: string; scope: 'selectedPeriod' | 'everyPeriod' };
+}
+export function defaultEarnings(): AdditionalEarnings {
+  return {
+    controlledTips: { isEnabled: false, amount: '0' },
+    vacationPay: { isEnabled: false, mode: 'percentOfEligibleEarnings', amount: '4', includeControlledTips: false },
+    statHolidayPay: { isEnabled: false, amount: '0', scope: 'selectedPeriod' },
+  };
+}
+
 /** Strings preserve incomplete editing and exact decimals without Number(). */
 export interface PayrollInput {
   annualSalary: string;
+  /** UI-linked annual base earnings include regular and overtime earnings. */
+  linkedIncome?: boolean;
+  earnings?: AdditionalEarnings;
   incomeType: IncomeType;
   hourlyRate: string;
   hoursPerWeek: string;
@@ -33,6 +54,7 @@ export interface PayrollInput {
 
 export function defaultInput(): PayrollInput {
   return {
+    linkedIncome: false, earnings: defaultEarnings(),
     annualSalary: '65000', incomeType: 'annualSalary', hourlyRate: '25', hoursPerWeek: '37.5',
     overtimeHours: '0', overtimeMultiplier: '1.5', province: 'manitoba', frequency: 'semiMonthly',
     selectedPayPeriod: 1,
@@ -43,7 +65,7 @@ export function defaultInput(): PayrollInput {
 }
 
 export const breakdownKeys = [
-  'gross', 'regularGross', 'overtimeGross', 'federalTax', 'provincialTax', 'cpp', 'cpp2', 'ei',
+  'gross', 'regularGross', 'overtimeGross', 'controlledTipsGross', 'vacationGross', 'statHolidayGross', 'vacationIncomeTax', 'federalTax', 'provincialTax', 'cpp', 'cpp2', 'ei',
   'pension', 'rrsp', 'unionDues', 'health', 'otherPreTax', 'otherAfterTax', 'employerMatch', 'net',
 ] as const;
 export type BreakdownKey = typeof breakdownKeys[number];

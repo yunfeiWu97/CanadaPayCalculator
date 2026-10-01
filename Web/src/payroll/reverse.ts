@@ -80,7 +80,7 @@ function requireSupportedPercentages(input: PayrollInput): void {
 export function solveGrossForNet(input: PayrollInput, rawTarget: string, basis: NetBasis): ReversePayrollResult {
   const targetNet = targetAmount(rawTarget);
   // Annual gross is the reverse driver. Inactive hourly drafts stay untouched.
-  const probeInput: PayrollInput = { ...input, incomeType: 'annualSalary' };
+  const probeInput: PayrollInput = { ...input, incomeType: 'annualSalary', linkedIncome: false };
   const cache = new Map<number, PayrollResult | null>();
   const probe = (salaryCents: number): PayrollResult | null => {
     if (cache.has(salaryCents)) return cache.get(salaryCents)!;

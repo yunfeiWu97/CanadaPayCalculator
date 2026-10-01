@@ -14,6 +14,8 @@ let openHelp: HTMLButtonElement | null = null;
 const fieldNames: Record<string, string> = {
   'annual salary': '年薪', 'hourly rate': '基本时薪', 'regular hours per week': '每周正常工时',
   'hours per week': '每周正常工时', 'overtime hours': '每周加班工时',
+  'regular hours every two weeks': '每两周正常工时',
+  'overtime hours every two weeks': '每两周加班工时',
   'overtime hours per week': '每周加班工时', 'overtime multiplier': '加班工资倍数',
   'weekly hours (maximum 168)': '每周总工时（最多 168 小时）',
   'overtime multiplier (1 to 10)': '加班工资倍数（1 至 10）', 'annual earnings': '年度税前收入',
@@ -21,6 +23,11 @@ const fieldNames: Record<string, string> = {
   'union dues': '工会会费', 'health benefits': '医疗及牙科福利扣款',
   'other pre-tax deduction': '其他税前扣款', 'other after-tax deduction': '其他税后扣款',
   'employer pension contribution': '雇主养老金缴款',
+  'controlled tips per paycheque': '每次发薪的雇主经手小费',
+  'statutory holiday pay': '法定节假日工资',
+  'statutory holiday pay scope': '法定节假日工资适用范围',
+  'vacation pay': '假期工资', 'vacation pay mode': '假期工资金额方式',
+  'weekly hours (greater than zero for linked salary)': '每周正常工时（联动年薪时须大于零）',
 };
 
 function translatedField(field: string): string {

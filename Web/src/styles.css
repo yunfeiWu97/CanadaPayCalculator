@@ -115,6 +115,27 @@ h1 { font-weight: 650; font-size: clamp(30px, 4.4vw, 45px); line-height: 1.12; l
 .field-hint { color: var(--muted); font-size: 11px; line-height: 1.6; margin-top: 9px; }
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .linked-hourly-fields { padding-top: 20px; margin-top: 20px; border-top: 1px solid var(--border); }
+.linked-hourly-fields > .hours-pair { margin-top: 16px; }
+.hours-pair:not(.is-biweekly) { grid-template-columns: 1fr; }
+.overtime-details > .hours-pair + .field { margin-top: 16px; }
+.additional-earnings { padding-top: 14px; margin-top: 19px; border-top: 1px solid var(--border); }
+.additional-earnings > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 42px; font-size: 12px; font-weight: 600; color: var(--accent); }
+.additional-earnings > summary svg { width: 16px; height: 16px; }
+.additional-earnings.input-card { padding-top: 18px; margin-top: 0; }
+.earnings-body { padding-top: 6px; }
+.earnings-body > .field-hint { margin-top: 0; margin-bottom: 16px; }
+.earning-editor { border-top: 1px solid var(--border); padding: 15px 0; }
+.earning-editor:last-child { padding-bottom: 0; }
+.earning-title { display: block; font-size: 12px; font-weight: 600; line-height: 1.5; }
+.earning-editor .field-hint { font-size: 10px; }
+.earning-fields { margin-top: 15px; }
+.earning-fields label { font-size: 10px; }
+.earning-fields .select-field select { font-size: 11px; }
+.vacation-presets { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 11px; }
+.vacation-presets > span { font-size: 10px; color: var(--muted); }
+.vacation-presets button { min-height: 36px; min-width: 39px; background: var(--accent-soft); color: var(--accent); border: 1px solid var(--border); border-radius: 7px; font-size: 11px; font-weight: 600; }
+.check-option { display: flex; align-items: center; gap: 10px; font-size: 11px; line-height: 1.6; padding-top: 14px; cursor: pointer; }
+.check-option input { width: 16px; height: 16px; margin: 0; flex-shrink: 0; accent-color: var(--accent); }
 #income-driver { font-size: 10px; margin-top: 7px; }
 .overtime-details { margin-top: 15px; }
 summary { list-style: none; }
@@ -226,6 +247,7 @@ details[open] > summary svg { transform: rotate(180deg); }
 .annual-overview > .field-hint { font-size: 10px; max-width: 240px; }
 .annual-overview dl { border-top: 1px solid var(--border); margin-top: 23px; padding-top: 11px; }
 .annual-overview .hourly-equivalents dl { margin-top: 15px; padding-top: 11px; }
+.annual-overview .annual-extra-earnings dl { margin-top: 15px; padding-top: 11px; }
 .hourly-equivalents .field-hint { font-size: 9px; }
 .hourly-unavailable { padding-top: 12px; margin-top: 15px; border-top: 1px solid var(--border); font-size: 10px; }
 .annual-grid .amount-row { font-size: 10px; gap: 10px; padding: 6px 0; }
