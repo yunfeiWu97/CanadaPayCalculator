@@ -1,0 +1,89 @@
+{
+  "_generatedFrom": "Sources/PayrollCore/TaxConfiguration.swift",
+  "_sourceSHA256": "37a8ebdb1c5ba7f529332cd72513035e60e4e5d430c221edf2499db106466034",
+  "year": 2026,
+  "federal": {
+    "brackets": [
+      {
+        "lowerBound": "0",
+        "rate": "0.14",
+        "payrollConstant": "0"
+      },
+      {
+        "lowerBound": "58523",
+        "rate": "0.205",
+        "payrollConstant": "3804"
+      },
+      {
+        "lowerBound": "117045",
+        "rate": "0.26",
+        "payrollConstant": "10241"
+      },
+      {
+        "lowerBound": "181440",
+        "rate": "0.29",
+        "payrollConstant": "15685"
+      },
+      {
+        "lowerBound": "258482",
+        "rate": "0.33",
+        "payrollConstant": "26024"
+      }
+    ],
+    "basicPersonalAmount": {
+      "maximum": "16452",
+      "minimum": "14829",
+      "phaseoutStart": "181440",
+      "phaseoutEnd": "258482"
+    },
+    "employmentAmount": "1501"
+  },
+  "provinces": {
+    "manitoba": {
+      "brackets": [
+        {
+          "lowerBound": "0",
+          "rate": "0.108",
+          "payrollConstant": "0"
+        },
+        {
+          "lowerBound": "47000",
+          "rate": "0.1275",
+          "payrollConstant": "917"
+        },
+        {
+          "lowerBound": "100000",
+          "rate": "0.174",
+          "payrollConstant": "5567"
+        }
+      ],
+      "basicPersonalAmount": {
+        "maximum": "15780",
+        "minimum": "0",
+        "phaseoutStart": "200000",
+        "phaseoutEnd": "400000"
+      }
+    }
+  },
+  "cpp": {
+    "annualBasicExemption": "3500",
+    "yearlyMaximumPensionableEarnings": "74600",
+    "yearlyAdditionalMaximumPensionableEarnings": "85000",
+    "baseRate": "0.0495",
+    "firstAdditionalRate": "0.01",
+    "secondAdditionalRate": "0.04",
+    "maximumBaseContribution": "3519.45",
+    "maximumFirstAdditionalContribution": "711",
+    "maximumSecondAdditionalContribution": "416"
+  },
+  "ei": {
+    "rate": "0.0163",
+    "maximumInsurableEarnings": "68900",
+    "maximumPremium": "1123.07"
+  },
+  "sourceURLs": [
+    "https://www.canada.ca/en/revenue-agency/services/forms-publications/payroll/t4127-payroll-deductions-formulas/t4127-jan/t4127-jan-payroll-deductions-formulas-computer-programs.html",
+    "https://www.canada.ca/en/revenue-agency/services/forms-publications/payroll/t4127-payroll-deductions-formulas/t4127-jul/t4127-jul-payroll-deductions-formulas.html",
+    "https://www.canada.ca/en/revenue-agency/services/forms-publications/payroll/t4032-payroll-deductions-tables/t4032mb-jan/t4032mb-january-general-information.html"
+  ]
+}

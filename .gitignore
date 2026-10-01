@@ -25,3 +25,10 @@ Thumbs.db
 verification-output/
 .validation/
 __pycache__/
+
+# Web/PWA dependencies, generated output, and browser-test artifacts
+node_modules/
+Web/dist/
+Web/test-results/
+Web/playwright-report/
+Web/.vite/

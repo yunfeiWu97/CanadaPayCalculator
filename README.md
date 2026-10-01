@@ -2,6 +2,8 @@
 
 A native SwiftUI iPhone utility for estimating Canadian employment take-home pay. Manitoba is the first supported province. The app starts with **$65,000 annual salary and semi-monthly pay (24 paycheques)** and recalculates as you edit inputs.
 
+An installable **Web/PWA companion** is now available in [`Web/`](Web/README.md). It reuses the native payroll rules, generated tax configuration, and regression cases, supports offline calculation and iPhone **Add to Home Screen**, and includes a free GitHub Pages deployment workflow. See the [web setup and deployment guide](Web/README.md).
+
 ## What is included
 
 - Salary or hourly income, regular hours, and additional weekly overtime with a configurable multiplier.

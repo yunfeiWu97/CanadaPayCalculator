@@ -1,0 +1,279 @@
+{
+  "sourceFile": "Tests/PayrollCoreTests/PayrollCalculatorTests.swift",
+  "cases": [
+    {
+      "id": "manitoba-65000-semi-monthly",
+      "sourceTest": "testManitoba65000SemiMonthlyMatchesReferencePaycheque",
+      "input": {},
+      "expected": {
+        "taxYear": "2026",
+        "periods.length": "24",
+        "currentPeriod.gross": "2708.33",
+        "currentPeriod.cpp": "152.47",
+        "currentPeriod.cpp2": "0",
+        "currentPeriod.ei": "44.15",
+        "currentPeriod.federalTax": "262.79",
+        "currentPeriod.provincialTax": "214.36",
+        "currentPeriod.incomeTax": "477.15",
+        "currentPeriod.net": "2034.56",
+        "annual.gross": "65000",
+        "annual.cpp": "3659.28",
+        "annual.ei": "1059.60",
+        "annual.incomeTax": "11451.62",
+        "annual.net": "48829.50",
+        "monthlyNet": "4069.13"
+      }
+    },
+    {
+      "id": "manitoba-65000-biweekly",
+      "sourceTest": "testManitoba65000BiweeklyHas26DifferentCheques",
+      "input": {
+        "frequency": "biweekly"
+      },
+      "expected": {
+        "periods.length": "26",
+        "currentPeriod.gross": "2500",
+        "currentPeriod.cpp": "140.74",
+        "currentPeriod.ei": "40.75",
+        "currentPeriod.federalTax": "242.58",
+        "currentPeriod.provincialTax": "197.87",
+        "currentPeriod.incomeTax": "440.45",
+        "currentPeriod.net": "1878.06",
+        "annual.cpp": "3659.24",
+        "annual.ei": "1059.50",
+        "annual.incomeTax": "11451.70",
+        "annual.net": "48829.56"
+      }
+    },
+    {
+      "id": "hourly-25-biweekly",
+      "sourceTest": "testHourly25At37Point5HoursBiweekly",
+      "input": {
+        "incomeType": "hourly",
+        "frequency": "biweekly"
+      },
+      "expected": {
+        "annual.regularGross": "48750",
+        "currentPeriod.gross": "1875",
+        "currentPeriod.cpp": "103.55",
+        "currentPeriod.ei": "30.56",
+        "currentPeriod.incomeTax": "270.48",
+        "currentPeriod.net": "1470.41",
+        "annual.net": "38230.66"
+      }
+    },
+    {
+      "id": "recurring-overtime",
+      "sourceTest": "testRecurringOvertimeIsAdditionalWeeklyIncome",
+      "input": {
+        "incomeType": "hourly",
+        "frequency": "biweekly",
+        "overtimeHours": "5"
+      },
+      "expected": {
+        "annual.regularGross": "48750",
+        "annual.overtimeGross": "9750",
+        "annual.gross": "58500",
+        "currentPeriod.regularGross": "1875",
+        "currentPeriod.overtimeGross": "375",
+        "currentPeriod.gross": "2250"
+      }
+    },
+    {
+      "id": "salary-120000-caps",
+      "sourceTest": "test120000SalaryReachesEveryStatutoryMaximum",
+      "input": {
+        "annualSalary": "120000"
+      },
+      "expected": {
+        "annual.cpp": "4230.45",
+        "annual.cpp2": "416",
+        "annual.ei": "1123.07",
+        "annual.incomeTax": "30422.28",
+        "annual.net": "83808.20",
+        "periods.23.cpp": "0",
+        "periods.23.cpp2": "0",
+        "periods.23.ei": "0"
+      }
+    },
+    {
+      "id": "cpp2-worked-schedule",
+      "sourceTest": "testCPP2TimingMatchesCRAT4127WorkedExample",
+      "input": {
+        "annualSalary": "100800"
+      },
+      "expected": {
+        "periods.16.cpp": "241.22",
+        "periods.16.cpp2": "0",
+        "periods.17.cpp": "129.71",
+        "periods.17.cpp2": "40",
+        "periods.17.cppEnhancedTaxDeduction": "61.80",
+        "periods.18.cpp": "0",
+        "periods.18.cpp2": "168",
+        "periods.20.cpp2": "40",
+        "periods.21.cpp2": "0",
+        "annual.cpp2": "416"
+      }
+    },
+    {
+      "id": "rpp-five-percent",
+      "sourceTest": "testRPPPercentReducesTaxAndTakeHomeButNotCPPOrEI",
+      "input": {
+        "deductions": {
+          "pension": {
+            "isEnabled": true,
+            "amount": "5"
+          }
+        }
+      },
+      "expected": {
+        "currentPeriod.pension": "135.42",
+        "currentPeriod.net": "1944.17",
+        "annual.net": "46660.13"
+      }
+    },
+    {
+      "id": "rrsp-fixed-100",
+      "sourceTest": "testRRSPFixedPayrollContributionReducesWithholding",
+      "input": {
+        "deductions": {
+          "rrsp": {
+            "mode": "fixedPerPeriod",
+            "amount": "100",
+            "isEnabled": true
+          }
+        }
+      },
+      "expected": {
+        "currentPeriod.rrsp": "100",
+        "currentPeriod.net": "1967.81",
+        "annual.rrsp": "2400",
+        "annual.net": "47227.50"
+      }
+    },
+    {
+      "id": "no-optional-deductions",
+      "sourceTest": "testNoOptionalDeductionsByDefault",
+      "input": {},
+      "expected": {
+        "currentPeriod.optionalDeductions": "0",
+        "annual.employeeRetirementContributions": "0",
+        "annual.employerMatch": "0"
+      }
+    },
+    {
+      "id": "employer-only",
+      "sourceTest": "testEmployerContributionDoesNotRequireEmployeeContribution",
+      "input": {
+        "deductions": {
+          "employerMatch": {
+            "isEnabled": true,
+            "amount": "5"
+          }
+        }
+      },
+      "expected": {
+        "currentPeriod.employerMatch": "135.42",
+        "annual.pension": "0"
+      }
+    },
+    {
+      "id": "after-tax-benefits",
+      "sourceTest": "testHealthAndOtherAfterTaxDeductWithoutReducingTax",
+      "input": {
+        "deductions": {
+          "health": {
+            "mode": "fixedPerPeriod",
+            "amount": "50",
+            "isEnabled": true
+          },
+          "otherAfterTax": {
+            "mode": "fixedPerPeriod",
+            "amount": "20",
+            "isEnabled": true
+          }
+        }
+      },
+      "expected": {
+        "annual.afterTaxDeductions": "1680"
+      }
+    },
+    {
+      "id": "union-authorized-pre-tax",
+      "sourceTest": "testUnionAndAuthorizedPreTaxReduceTaxableIncomeOnly",
+      "input": {
+        "deductions": {
+          "unionDues": {
+            "mode": "fixedPerPeriod",
+            "amount": "30",
+            "isEnabled": true
+          },
+          "otherPreTax": {
+            "mode": "fixedPerPeriod",
+            "amount": "20",
+            "isEnabled": true
+          }
+        }
+      },
+      "expected": {
+        "annual.preTaxDeductions": "1200"
+      }
+    },
+    {
+      "id": "final-cheque-rounding",
+      "sourceTest": "testLastChequeReconcilesRoundingInsteadOfInventingGrossIncome",
+      "input": {},
+      "expected": {
+        "periods.0.gross": "2708.33",
+        "periods.23.gross": "2708.41",
+        "periods.23.incomeTax": "477.17",
+        "periods.23.net": "2034.62"
+      }
+    },
+    {
+      "id": "zero-income",
+      "sourceTest": "testZeroIncomeHasZeroTaxesAndDeductions",
+      "input": {
+        "annualSalary": "0"
+      },
+      "expected": {
+        "annual.gross": "0",
+        "annual.totalDeductions": "0",
+        "monthlyNet": "0",
+        "effectiveDeductionRate": "0"
+      }
+    },
+    {
+      "id": "sub-dollar-salary",
+      "sourceTest": "testSubDollarSalaryNeverCreatesNegativeLastCheque",
+      "input": {
+        "annualSalary": "0.26",
+        "frequency": "weekly"
+      },
+      "expected": {
+        "annual.gross": "0.26"
+      }
+    },
+    {
+      "id": "below-cpp-exemption",
+      "sourceTest": "testIncomeBelowCPPAnnualExemptionHasNoCPPAndNoIncomeTax",
+      "input": {
+        "annualSalary": "3000"
+      },
+      "expected": {
+        "annual.cpp": "0",
+        "annual.cpp2": "0",
+        "annual.incomeTax": "0"
+      }
+    },
+    {
+      "id": "enhanced-cpp",
+      "sourceTest": "testEnhancedCPPIsDeductionAndBaseCPPReceivesTaxCredit",
+      "input": {},
+      "expected": {
+        "currentPeriod.cppEnhancedTaxDeduction": "25.63",
+        "currentPeriod.annualizedTaxableIncome": "64384.80"
+      }
+    }
+  ]
+}
