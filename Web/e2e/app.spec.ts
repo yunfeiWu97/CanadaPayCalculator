@@ -135,6 +135,8 @@ test('Simplified Chinese persists, explains payroll concepts on hover/focus, and
   await cppHelp.hover();
   await expect(page.locator('#concept-tooltip')).toBeVisible();
   await expect(page.locator('#concept-tooltip')).toContainText('退休');
+  await page.evaluate(() => window.dispatchEvent(new Event('scroll')));
+  await expect(page.locator('#concept-tooltip')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.locator('#concept-tooltip')).toBeHidden();
   await cppHelp.focus();

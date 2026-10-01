@@ -227,7 +227,19 @@ export function initI18n(): void {
   document.addEventListener('click', event => {
     if (!tooltip.hidden && event.target instanceof Element && !event.target.closest('.concept-help, #concept-tooltip')) hideTooltip();
   });
-  window.addEventListener('resize', hideTooltip);
-  window.addEventListener('scroll', hideTooltip, true);
+  const repositionOpenTooltip = (): void => {
+    if (!openHelp || tooltip.hidden) return;
+    const rect = openHelp.getBoundingClientRect();
+    if (!document.contains(openHelp) || rect.width === 0 || rect.bottom < 0 || rect.top > window.innerHeight) {
+      hideTooltip();
+      return;
+    }
+    // Keyboard focus and browser auto-scroll can follow pointerenter. Keep the
+    // explanation attached to its visible control instead of closing it.
+    positionTooltip(openHelp);
+  };
+  window.addEventListener('resize', repositionOpenTooltip);
+  window.addEventListener('scroll', repositionOpenTooltip, true);
+  document.addEventListener('close', hideTooltip, true);
   applyLanguage();
 }
