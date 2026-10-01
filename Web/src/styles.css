@@ -90,6 +90,9 @@ h1 { font-weight: 650; font-size: clamp(30px, 4.4vw, 45px); line-height: 1.12; l
 .province-pill svg { pointer-events: none; position: absolute; right: 6px; width: 14px; height: 14px; }
 .year-pill { background: var(--accent-soft); padding: 9px 11px; font-size: 11px; font-weight: 600; border-radius: 7px; }
 .currency-note { color: var(--muted); font-size: 11px; padding-left: 4px; }
+.mode-tabs { display: inline-flex; align-items: stretch; gap: 4px; padding: 4px; margin: 0 0 24px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-soft); }
+.mode-tabs button { min-height: 42px; padding: 10px 17px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 600; }
+.mode-tabs button[aria-selected="true"] { color: var(--ink); background: var(--surface); box-shadow: 0 1px 5px #23382e0a; }
 .calculator-grid { display: grid; grid-template-columns: 1.05fr 1fr; align-items: start; gap: 25px; }
 .inputs { display: flex; flex-direction: column; gap: 18px; }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: 17px; box-shadow: var(--shadow); }
@@ -165,6 +168,11 @@ details[open] > summary svg { transform: rotate(180deg); }
 .reverse-result { margin-top: 15px; padding: 14px; border: 1px solid var(--border); background: var(--accent-soft); border-radius: 10px; }
 .reverse-result .amount-row { font-size: 11px; gap: 10px; }
 .reverse-result .field-hint { font-size: 10px; }
+.reverse-empty { padding: 30px 26px; }
+.reverse-empty .eyebrow { color: var(--muted); font-size: 9px; letter-spacing: 1.4px; }
+.reverse-empty h2 { font-size: 21px; font-weight: 600; letter-spacing: -.5px; margin-top: 16px; }
+.reverse-empty p { color: var(--muted); font-size: 12px; line-height: 1.7; margin-top: 13px; }
+.reverse-output .take-home-card .hero-comparison { margin-top: 21px; padding-top: 20px; border-top: 1px solid #ffffff26; }
 #save-status { color: var(--muted); font-size: 10px; line-height: 1.5; }
 .sticky-result { position: sticky; top: 24px; }
 .results-column { align-self: stretch; min-width: 0; }
@@ -324,6 +332,10 @@ dialog::backdrop { background: #142d2680; backdrop-filter: blur(4px); }
   .year-pill { font-size: 10px; }
   .currency-note { font-size: 10px; padding-left: 0; }
   .calculator-grid { grid-template-columns: 1fr; gap: 21px; }
+  .mode-tabs { display: flex; width: 100%; margin-bottom: 20px; }
+  .mode-tabs button { flex: 1; padding-left: 8px; padding-right: 8px; font-size: 11px; }
+  #mobile-hero-slot { width: 100%; }
+  #mobile-hero-slot .take-home-card { width: 100%; }
   .inputs { gap: 15px; }
   .sticky-result { position: static; }
   .input-card { padding: 22px; }

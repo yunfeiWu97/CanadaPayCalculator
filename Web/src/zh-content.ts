@@ -1,6 +1,19 @@
 /** Exact English source copy → Simplified Chinese. English stays the source of
  * truth so switching languages does not alter payroll inputs or calculations. */
 export const zhStrings: Record<string, string> = {
+  'Calculate take-home': '计算到手工资',
+  'Calculation mode': '计算模式',
+  'Gross-pay estimate inputs': '反推税前年薪的条件',
+  'Set a take-home target, then choose the pay schedule and deductions for this estimate.': '先设置目标到手工资，再选择这次反推使用的发薪安排与扣款。',
+  'These settings are separate from your take-home calculation.': '这些条件独立于到手工资计算。',
+  'Your gross-pay estimate': '你的税前年薪估算',
+  'START WITH YOUR GOAL': '从你的目标开始',
+  'Set your target, schedule and deductions, then select Find gross pay.': '设置目标、发薪安排和扣款后，点击“反推税前年薪”。',
+  'ESTIMATED GROSS SALARY': '估算税前年薪',
+  'Per year': '每年',
+  'Target comparison': '目标金额对比',
+  'Your take-home calculation has not been changed.': '到手工资计算中的条件保持不变。',
+  'Gross-pay estimate found.': '已得出税前年薪估算。',
   'Canada': '加拿大',
   'Pay': '薪资',
   'CALCULATOR': '计算器',

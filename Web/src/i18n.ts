@@ -34,6 +34,7 @@ function translatedCore(text: string): string {
   let match: RegExpMatchArray | null;
   if ((match = text.match(/^(\d+) tax year$/))) return `${match[1]} 纳税年度`;
   if ((match = text.match(/^(Weekly|Bi-weekly|Semi-monthly|Monthly) · (\d+) \/ year$/))) return `${zhStrings[match[1]] ?? match[1]} · 每年 ${match[2]} 次`;
+  if ((match = text.match(/^· (Weekly|Bi-weekly|Semi-monthly|Monthly)$/))) return `· ${zhStrings[match[1]] ?? match[1]}`;
   if ((match = text.match(/^Of (\d+) paycheques · January to December$/))) return `全年共 ${match[1]} 次发薪 · 1 月至 12 月`;
   if ((match = text.match(/^(\d+) enabled$/))) return `已启用 ${match[1]} 项`;
   if ((match = text.match(/^· Paycheque (\d+) of (\d+)$/))) return `· 全年 ${match[2]} 次中的第 ${match[1]} 次`;
@@ -42,10 +43,10 @@ function translatedCore(text: string): string {
   if ((match = text.match(/^Annual amounts averaged over (.+) actual working hours \((.+) regular \+ (.+) overtime per week × 52\)\. Overtime pay is included in the average\.$/))) return `按全年实际工作 ${match[1]} 小时平均换算（每周正常工时 ${match[2]} + 加班工时 ${match[3]}，共 52 周）。此平均时薪已包含加班收入。`;
   if ((match = text.match(/^Hourly equivalents unavailable\. (.+)$/))) return `暂时无法换算时薪。${translatedCore(match[1])}`;
   if ((match = text.match(/^Enter a valid, nonnegative value for (.+)\.$/))) return `请为${translatedField(match[1])}输入有效的非负数。`;
-  if ((match = text.match(/^Take-home amounts are (.+)\. This salary has been applied above\. The estimate is within \$0\.01 of your target; cent rounding and payroll limits can prevent an exact match\.$/))) {
+  if ((match = text.match(/^Take-home amounts are (.+)\. The estimate is within \$0\.01 of your target; cent rounding and payroll limits can prevent an exact match\.$/))) {
     const period = match[1].match(/^for paycheque (\d+) of (\d+)$/);
     const basis = period ? `全年 ${period[2]} 次中的第 ${period[1]} 次发薪` : match[1] === 'per year' ? '全年' : '每月平均';
-    return `以上到手金额对应${basis}。此年薪已填入上方收入栏。估算与目标相差不超过 $0.01；按分取整及工资扣款上限可能使两者无法完全一致。`;
+    return `以上到手金额对应${basis}。估算与目标相差不超过 $0.01；按分取整及工资扣款上限可能使两者无法完全一致。`;
   }
   if ((match = text.match(/^T4127 payroll formulas — (January|July) (\d+)$/))) return `CRA T4127 工资扣款公式 — ${match[2]} 年 ${match[1] === 'January' ? '1' : '7'} 月`;
   if ((match = text.match(/^Manitoba · (\d+)$/))) return `曼尼托巴省 · ${match[1]}`;
@@ -91,19 +92,6 @@ function translateAttributes(element: Element): void {
   }
 }
 
-function conceptKey(title: string, index: number): string {
-  const lower = title.toLowerCase();
-  if (lower.includes('cpp2')) return 'cpp2';
-  if (lower.includes('cpp')) return 'cpp';
-  if (lower.includes('rrsp')) return 'rrsp';
-  if (/\bei\b/.test(lower)) return 'ei';
-  if (title.includes('联邦')) return 'federalTax';
-  if (title.includes('省') && title.includes('税')) return 'provincialTax';
-  if (title.includes('雇主')) return 'employerMatch';
-  if (title.includes('养老金') || lower.includes('rpp')) return 'pension';
-  return `concept-${index}`;
-}
-
 function hideTooltip(): void {
   tooltip.hidden = true;
   openHelp?.removeAttribute('aria-describedby');
@@ -138,46 +126,59 @@ function showTooltip(button: HTMLButtonElement, index: number): void {
   positionTooltip(button);
 }
 
-function termMatches(text: string, term: string): boolean {
-  if (/^[A-Za-z0-9]+$/.test(term)) return new RegExp(`(^|[^A-Za-z0-9])${term}([^A-Za-z0-9]|$)`).test(text);
-  return text.includes(term);
-}
+const contributionConcepts: Record<string, string> = {
+  pension: 'pension', employerMatch: 'employerMatch', rrsp: 'rrsp',
+  unionDues: 'unionDues', health: 'health', otherPreTax: 'preTax', otherAfterTax: 'afterTax',
+};
 
 function addConceptHelp(): void {
-  if (language !== 'zh') {
-    document.querySelectorAll('.concept-help').forEach(button => button.remove());
-    return;
-  }
-  const hosts = document.querySelectorAll<HTMLElement>('label, dt, th, h2, h3, p, .contribution-title, .metric-label, .tax-detail summary > span');
-  for (const host of hosts) {
-    if (excluded(host) || host.closest('.language-toggle') || host.querySelector('input, select')) continue;
-    // Child text is translated without wrapping or replacing controls.
-    const text = [...host.childNodes].filter(node => node.nodeType === Node.TEXT_NODE).map(node => node.textContent).join('');
-    if (!text.trim()) continue;
-    for (let index = 0; index < glossary.length; index += 1) {
-      const concept = glossary[index];
-      if (!concept.terms.some(term => termMatches(text, term))) continue;
-      const key = 'key' in concept && typeof concept.key === 'string' ? concept.key : conceptKey(concept.title, index);
-      if (host.querySelector(`.concept-help[data-concept="${key}"]`)) continue;
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'concept-help';
-      button.dataset.concept = key;
-      button.dataset.noTranslate = '';
-      button.textContent = '?';
-      button.setAttribute('aria-label', `解释：${concept.title}`);
-      button.setAttribute('aria-expanded', 'false');
-      button.addEventListener('pointerenter', () => showTooltip(button, index));
-      button.addEventListener('pointerleave', () => { if (document.activeElement !== button) hideTooltip(); });
-      button.addEventListener('focus', () => showTooltip(button, index));
-      button.addEventListener('blur', hideTooltip);
-      button.addEventListener('click', event => {
-        event.preventDefault(); event.stopPropagation();
-        showTooltip(button, index);
-      });
-      host.append(button);
+  const titleSelector = '.deductions-body .contribution-title';
+  // Help belongs only to optional deduction titles. Clean up markers left in
+  // other labels or paragraphs, and remove every marker in English mode.
+  document.querySelectorAll<HTMLButtonElement>('.concept-help').forEach(button => {
+    if (language !== 'zh' || !button.parentElement?.matches(titleSelector)) {
+      if (openHelp === button) hideTooltip();
+      button.remove();
     }
-  }
+  });
+  if (language !== 'zh') return;
+
+  document.querySelectorAll<HTMLElement>(titleSelector).forEach(host => {
+    const contribution = host.closest('.contribution');
+    const input = contribution?.querySelector<HTMLInputElement>('input[data-contribution]');
+    const requestedKey = host.dataset.helpConcept ?? input?.dataset.contribution ?? '';
+    const key = contributionConcepts[requestedKey] ?? host.dataset.helpConcept;
+    if (!key) return;
+    const index = glossary.findIndex(concept => concept.key === key);
+    if (index < 0) return;
+    const concept = glossary[index];
+    const existing = [...host.querySelectorAll<HTMLButtonElement>('.concept-help')];
+    const kept = existing.find(button => button.dataset.concept === key);
+    existing.filter(button => button !== kept).forEach(button => {
+      if (openHelp === button) hideTooltip();
+      button.remove();
+    });
+    if (kept) return;
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'concept-help';
+    button.dataset.concept = key;
+    button.dataset.noTranslate = '';
+    button.textContent = '?';
+    button.setAttribute('aria-label', `解释：${concept.title}`);
+    button.setAttribute('aria-expanded', 'false');
+    button.addEventListener('pointerenter', () => showTooltip(button, index));
+    button.addEventListener('pointerleave', () => { if (document.activeElement !== button) hideTooltip(); });
+    button.addEventListener('focus', () => showTooltip(button, index));
+    button.addEventListener('blur', hideTooltip);
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      showTooltip(button, index);
+    });
+    host.append(button);
+  });
 }
 
 /** Preserve original text and input drafts; update only display text and labels. */

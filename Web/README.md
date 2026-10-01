@@ -4,9 +4,11 @@ This is the free browser/PWA companion to the native SwiftUI application. It run
 
 Annual salary and base hourly wage are visible together. Editing either updates the other using the configured weekly hours and recurring overtime. The last edited amount drives the payroll calculation; choosing an input tab alone preserves the existing estimate. Gross and net hourly equivalents average annual amounts over actual working hours, including overtime.
 
-The top-right **ENG / 简体中文** controls switch the full interface and save your language choice locally. In Simplified Chinese, tax and retirement concepts include plain-language explanations available on hover, keyboard focus, or by tapping their help buttons.
+The top-right **ENG / 简体中文** controls switch the full interface and save your language choice locally. In Simplified Chinese, explanations appear only next to the seven contribution types inside **Pension & other deductions**, on hover, keyboard focus, or by tapping their help buttons.
 
-**Start with take-home pay** estimates annual gross salary from a target for the selected paycheque, an average month, or the full year. It uses the existing forward payroll engine and current optional deductions, displays the achievable net, and applies the estimated salary. Cent rounding can prevent exact matches. Extremely high percentage deductions that prevent reliable reverse estimation are reported rather than guessed.
+**Find gross pay** is a separate calculator with its own take-home target, pay schedule, optional deductions, and result. It estimates annual gross salary for a selected paycheque, an average month, or the full year, using the existing forward payroll engine. It does not change the forward calculator's salary or deductions. Cent rounding can prevent exact matches. Extremely high percentage deductions that prevent reliable reverse estimation are reported rather than guessed.
+
+On phones, the dark take-home card follows the income inputs immediately, before the pay schedule and optional deductions. On wider screens, it stays in the existing right-hand results column.
 
 ## Run and check locally
 

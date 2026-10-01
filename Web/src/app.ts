@@ -122,6 +122,7 @@ function restoreInput(): PayrollInput {
 }
 
 let input = restoreInput();
+let reverseInput = defaultInput();
 const app = document.querySelector<HTMLDivElement>('#app')!;
 const leaf = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="m16 3 3.2 7 4.4-2.2-.7 6.2 6.1.2-4.3 4.4 1.4 3.8-8.5-1.2V29h-3.2v-7.8L5.9 22.4l1.4-3.8L3 14.2l6.1-.2-.7-6.2 4.4 2.2L16 3Z" fill="currentColor"/></svg>';
 const chevron = '<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m6 8 4 4 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -131,24 +132,32 @@ function numericField(id: string, label: string, suffix: string, prefix = '', no
   return `<div class="field"><label for="${id}">${label}</label><div class="number-field">${prefix ? `<span aria-hidden="true">${prefix}</span>` : ''}<input id="${id}" name="${id}" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="80"${note ? ` aria-describedby="${id}-hint"` : ''}><span class="field-unit" aria-hidden="true">${suffix}</span></div>${note ? `<p class="field-hint" id="${id}-hint">${note}</p>` : ''}</div>`;
 }
 
+function reverseDeductionsMarkup(): string {
+  return `<details class="card deductions-card" id="reverse-deductions-details"><summary><span class="section-heading"><span class="step-number">03</span><span class="summary-heading">Pension & other deductions</span></span><span class="deductions-summary"><span id="reverse-deductions-count">Optional</span>${chevron}</span></summary><div class="deductions-body"><p class="field-hint">Employee deductions reduce take-home pay. Employer contributions are shown separately.</p>${contributions.map(({ key, title, note }) => `<div class="contribution"><label class="toggle-label" for="reverse-${key}-enabled"><span><span class="contribution-title" data-help-concept="${key}">${title}</span><span class="field-hint">${note}</span></span><span class="toggle"><input id="reverse-${key}-enabled" data-contribution="${key}" data-property="isEnabled" type="checkbox"><span aria-hidden="true"></span></span></label><div class="contribution-fields" id="reverse-${key}-fields" hidden><div class="field-grid contribution-grid"><div class="field"><label for="reverse-${key}-mode">Amount type</label><div class="select-field"><select id="reverse-${key}-mode" data-contribution="${key}" data-property="mode"><option value="percentOfGross">% of gross</option><option value="fixedPerPeriod">Fixed per cheque</option></select>${chevron}</div></div><div class="field"><label for="reverse-${key}-amount">${title} amount</label><div class="number-field"><input id="reverse-${key}-amount" data-contribution="${key}" data-property="amount" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="80"><span class="field-unit" id="reverse-${key}-unit" aria-hidden="true">%</span></div></div></div></div></div>`).join('')}<p class="schedule-note">Pre-tax deductions reduce income-tax withholding, not CPP or EI. Confirm eligibility and contribution limits with your employer.</p></div></details>`;
+}
+
 app.innerHTML = `
   <a class="skip-link" href="#calculator">Skip to calculator</a>
   <header class="site-header"><a class="brand" href="./" aria-label="Canada Pay Calculator home"><span class="brand-mark">${leaf}</span><span>Canada<span class="brand-light">Pay</span><small>CALCULATOR</small></span></a><div class="header-actions"><div class="language-toggle" id="language-toggle" data-no-translate role="group" aria-label="Language / 语言"><button type="button" id="language-zh" aria-pressed="false" aria-label="简体中文">简体中文</button><span aria-hidden="true">/</span><button type="button" id="language-en" aria-pressed="true" aria-label="English">ENG</button></div><span class="privacy-tag"><span class="status-dot"></span>Private by design</span><button class="button button-secondary install-button" type="button" data-install-help>Add to Home Screen</button><button class="icon-button" type="button" id="about-button" aria-label="How estimates work">${info}</button></div></header>
   <div id="pwa-update-banner" class="update-banner" hidden role="status"><span>A new version is ready.</span><button type="button" id="pwa-update-button" class="text-button">Update app</button></div>
   <main id="calculator" class="main-shell">
     <section class="introduction" aria-labelledby="page-title"><div class="eyebrow"><span class="tiny-maple">${leaf}</span>MADE FOR YOUR EVERYDAY</div><h1 id="page-title">Make sense of your pay.</h1><p>Your earnings, deductions, and take-home. Clearly.</p><div class="context-pills"><label class="province-pill" for="province"><span>Province</span><select id="province" name="province" aria-label="Province of employment"><option value="manitoba">Manitoba</option></select>${chevron}</label><span class="year-pill">${taxConfiguration.year} tax year</span><span class="currency-note">All amounts in CAD</span></div></section>
-    <div class="calculator-grid">
+    <div class="mode-tabs" role="tablist" aria-label="Calculation mode"><button type="button" id="mode-forward" role="tab" aria-selected="true" aria-controls="forward-panel">Calculate take-home</button><button type="button" id="mode-reverse" role="tab" aria-selected="false" aria-controls="reverse-panel" tabindex="-1">Find gross pay</button></div><section id="forward-panel" role="tabpanel" aria-labelledby="mode-forward"><div class="calculator-grid">
       <form id="input-form" class="inputs" novalidate aria-label="Your payroll inputs">
-        <section class="card input-card" aria-labelledby="income-heading"><div class="section-heading"><span class="step-number">01</span><h2 id="income-heading">Your income</h2></div><fieldset class="income-switch"><legend class="visually-hidden">Choose an amount to edit</legend><label><input type="radio" name="incomeType" value="annualSalary"><span>Edit annual salary</span></label><label><input type="radio" name="incomeType" value="hourly"><span>Edit hourly wage</span></label></fieldset><div id="salary-fields">${numericField('annualSalary', 'Annual salary', 'CAD / year', '$')}</div><div id="hourly-fields" class="linked-hourly-fields"><div class="field-grid">${numericField('hourlyRate', 'Base hourly rate', 'CAD / hour', '$')}${numericField('hoursPerWeek', 'Regular hours per week', 'hours')}</div><details class="overtime-details"><summary>Include overtime ${chevron}</summary><div class="field-grid">${numericField('overtimeHours', 'Overtime hours per week', 'hours')}${numericField('overtimeMultiplier', 'Overtime multiplier', '× regular rate')}</div><p class="field-hint">Hours are in addition to regular weekly hours. A multiplier of 1.5 means time and a half.</p></details><p class="field-hint" id="income-basis-hint">Edit either amount to update the other. Assumes the same hours each week for 52 paid weeks.</p><p class="field-hint" id="income-driver" aria-live="polite"></p></div></section>
-        <section class="card input-card" aria-labelledby="frequency-heading"><div class="section-heading"><span class="step-number">02</span><h2 id="frequency-heading">Your pay schedule</h2></div><div class="field"><label for="frequency">Pay frequency</label><div class="select-field"><select name="frequency" id="frequency">${Object.entries(payFrequencyLabels).map(([key, label]) => `<option value="${key}">${label} · ${payPeriods[key as keyof typeof payPeriods]} / year</option>`).join('')}</select>${chevron}</div><p class="field-hint" id="frequency-hint"></p></div><div class="period-control"><div><label for="selectedPayPeriod">Paycheque in the year</label><p id="period-count" class="field-hint"></p></div><div class="stepper"><button type="button" id="previous-period" aria-label="Previous paycheque">−</button><input id="selectedPayPeriod" name="selectedPayPeriod" type="number" min="1" step="1" inputmode="numeric" aria-describedby="period-count"><button type="button" id="next-period" aria-label="Next paycheque">+</button></div></div><p class="schedule-note">CPP, CPP2, and EI can change when annual limits are reached. This estimate starts with no earlier earnings on January 1.</p></section>
-        <details class="card deductions-card" id="deductions-details"><summary><span class="section-heading"><span class="step-number">03</span><span class="summary-heading">Pension & other deductions</span></span><span class="deductions-summary"><span id="deductions-count">Optional</span>${chevron}</span></summary><div class="deductions-body"><p class="field-hint">Employee deductions reduce take-home pay. Employer contributions are shown separately.</p>${contributions.map(({ key, title, note }) => `<div class="contribution"><label class="toggle-label" for="${key}-enabled"><span><span class="contribution-title">${title}</span><span class="field-hint">${note}</span></span><span class="toggle"><input id="${key}-enabled" data-contribution="${key}" data-property="isEnabled" type="checkbox"><span aria-hidden="true"></span></span></label><div class="contribution-fields" id="${key}-fields" hidden><div class="field-grid contribution-grid"><div class="field"><label for="${key}-mode">Amount type</label><div class="select-field"><select id="${key}-mode" data-contribution="${key}" data-property="mode"><option value="percentOfGross">% of gross</option><option value="fixedPerPeriod">Fixed per cheque</option></select>${chevron}</div></div><div class="field"><label for="${key}-amount">${title} amount</label><div class="number-field"><input id="${key}-amount" data-contribution="${key}" data-property="amount" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="80"><span class="field-unit" id="${key}-unit" aria-hidden="true">%</span></div></div></div></div></div>`).join('')}<p class="schedule-note">Pre-tax deductions reduce income-tax withholding, not CPP or EI. Confirm eligibility and contribution limits with your employer.</p></div></details>
-        <section class="card input-card reverse-card" aria-labelledby="reverse-heading"><div class="section-heading"><span class="step-number">↗</span><h2 id="reverse-heading">Start with take-home pay</h2></div><p class="field-hint">Set a net-pay target to estimate the gross salary you would need, using your current schedule and deductions.</p><div class="field-grid reverse-fields">${numericField('targetNet', 'Target take-home pay', 'CAD', '$')}<div class="field"><label for="targetNetBasis">Target period</label><div class="select-field"><select id="targetNetBasis" name="targetNetBasis"><option value="perPay">Per paycheque</option><option value="monthly">Average month</option><option value="annual">Full year</option></select>${chevron}</div></div></div><button class="button button-primary" type="button" id="find-gross-button">Find gross pay</button><p class="field-hint" id="reverse-status" role="status" aria-live="polite">Uses the selected paycheque when that target period is chosen.</p><div id="reverse-result" class="reverse-result" hidden></div></section><div class="input-footer"><span id="save-status" aria-live="polite">Inputs saved on this device</span><button class="text-button" id="reset-button" type="button">Reset inputs</button></div>
+        <section class="card input-card" id="income-card" aria-labelledby="income-heading"><div class="section-heading"><span class="step-number">01</span><h2 id="income-heading">Your income</h2></div><fieldset class="income-switch"><legend class="visually-hidden">Choose an amount to edit</legend><label><input type="radio" name="incomeType" value="annualSalary"><span>Edit annual salary</span></label><label><input type="radio" name="incomeType" value="hourly"><span>Edit hourly wage</span></label></fieldset><div id="salary-fields">${numericField('annualSalary', 'Annual salary', 'CAD / year', '$')}</div><div id="hourly-fields" class="linked-hourly-fields"><div class="field-grid">${numericField('hourlyRate', 'Base hourly rate', 'CAD / hour', '$')}${numericField('hoursPerWeek', 'Regular hours per week', 'hours')}</div><details class="overtime-details"><summary>Include overtime ${chevron}</summary><div class="field-grid">${numericField('overtimeHours', 'Overtime hours per week', 'hours')}${numericField('overtimeMultiplier', 'Overtime multiplier', '× regular rate')}</div><p class="field-hint">Hours are in addition to regular weekly hours. A multiplier of 1.5 means time and a half.</p></details><p class="field-hint" id="income-basis-hint">Edit either amount to update the other. Assumes the same hours each week for 52 paid weeks.</p><p class="field-hint" id="income-driver" aria-live="polite"></p></div></section>
+        <div id="mobile-hero-slot" hidden></div><section class="card input-card" aria-labelledby="frequency-heading"><div class="section-heading"><span class="step-number">02</span><h2 id="frequency-heading">Your pay schedule</h2></div><div class="field"><label for="frequency">Pay frequency</label><div class="select-field"><select name="frequency" id="frequency">${Object.entries(payFrequencyLabels).map(([key, label]) => `<option value="${key}">${label} · ${payPeriods[key as keyof typeof payPeriods]} / year</option>`).join('')}</select>${chevron}</div><p class="field-hint" id="frequency-hint"></p></div><div class="period-control"><div><label for="selectedPayPeriod">Paycheque in the year</label><p id="period-count" class="field-hint"></p></div><div class="stepper"><button type="button" id="previous-period" aria-label="Previous paycheque">−</button><input id="selectedPayPeriod" name="selectedPayPeriod" type="number" min="1" step="1" inputmode="numeric" aria-describedby="period-count"><button type="button" id="next-period" aria-label="Next paycheque">+</button></div></div><p class="schedule-note">CPP, CPP2, and EI can change when annual limits are reached. This estimate starts with no earlier earnings on January 1.</p></section>
+        <details class="card deductions-card" id="deductions-details"><summary><span class="section-heading"><span class="step-number">03</span><span class="summary-heading">Pension & other deductions</span></span><span class="deductions-summary"><span id="deductions-count">Optional</span>${chevron}</span></summary><div class="deductions-body"><p class="field-hint">Employee deductions reduce take-home pay. Employer contributions are shown separately.</p>${contributions.map(({ key, title, note }) => `<div class="contribution"><label class="toggle-label" for="${key}-enabled"><span><span class="contribution-title" data-help-concept="${key}">${title}</span><span class="field-hint">${note}</span></span><span class="toggle"><input id="${key}-enabled" data-contribution="${key}" data-property="isEnabled" type="checkbox"><span aria-hidden="true"></span></span></label><div class="contribution-fields" id="${key}-fields" hidden><div class="field-grid contribution-grid"><div class="field"><label for="${key}-mode">Amount type</label><div class="select-field"><select id="${key}-mode" data-contribution="${key}" data-property="mode"><option value="percentOfGross">% of gross</option><option value="fixedPerPeriod">Fixed per cheque</option></select>${chevron}</div></div><div class="field"><label for="${key}-amount">${title} amount</label><div class="number-field"><input id="${key}-amount" data-contribution="${key}" data-property="amount" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="80"><span class="field-unit" id="${key}-unit" aria-hidden="true">%</span></div></div></div></div></div>`).join('')}<p class="schedule-note">Pre-tax deductions reduce income-tax withholding, not CPP or EI. Confirm eligibility and contribution limits with your employer.</p></div></details>
+<div class="input-footer"><span id="save-status" aria-live="polite">Inputs saved on this device</span><button class="text-button" id="reset-button" type="button">Reset inputs</button></div>
       </form>
       <aside class="results-column" aria-label="Your pay estimate"><div class="sticky-result"><div id="result-content"></div><div id="validation-card" class="card validation-card" hidden role="status" aria-live="polite"><span class="validation-icon">!</span><h2>Check your inputs</h2><p id="validation-message"></p><p class="field-hint">Your estimate will appear when all active amounts are valid.</p></div><div id="calculation-announcement" class="visually-hidden" aria-live="polite" aria-atomic="true"></div></div></aside>
     </div>
     <section id="annual-summary" class="annual-summary" aria-label="Your year at a glance"></section>
     <section id="estimate-notes" class="estimate-notes" hidden aria-labelledby="notes-heading"><h2 id="notes-heading">Estimate notes</h2><ul id="notes-list"></ul></section>
-    <footer class="site-footer"><div><p>Built to bring clarity to payday.</p><span>Your inputs and calculations stay on this device. No account needed.</span></div><button id="methodology-button" class="text-button" type="button">Methodology & reference ${info}</button><p class="estimate-disclaimer">An estimate of payroll withholding. Your employer’s TD1 amounts, benefits, year-to-date earnings, and rounding can change your actual pay. Final annual income tax may differ.</p><div class="footer-status"><span id="network-status" aria-live="polite"></span><span>Manitoba · ${taxConfiguration.year}</span></div></footer>
+    </section><section id="reverse-panel" role="tabpanel" aria-labelledby="mode-reverse" hidden><div class="calculator-grid reverse-grid"><form id="reverse-form" class="inputs" novalidate aria-label="Gross-pay estimate inputs">
+<section class="card input-card reverse-card" aria-labelledby="reverse-heading"><div class="section-heading"><span class="step-number">01</span><h2 id="reverse-heading">Start with take-home pay</h2></div><p class="field-hint">Set a take-home target, then choose the pay schedule and deductions for this estimate.</p><div class="field-grid reverse-fields">${numericField('targetNet', 'Target take-home pay', 'CAD', '$')}<div class="field"><label for="targetNetBasis">Target period</label><div class="select-field"><select id="targetNetBasis" name="targetNetBasis"><option value="perPay">Per paycheque</option><option value="monthly">Average month</option><option value="annual">Full year</option></select>${chevron}</div></div></div><button class="button button-primary" type="button" id="find-gross-button">Find gross pay</button><p class="field-hint" id="reverse-status" role="status" aria-live="polite">Uses the selected paycheque when that target period is chosen.</p></section>
+      <section class="card input-card" aria-labelledby="reverse-frequency-heading"><div class="section-heading"><span class="step-number">02</span><h2 id="reverse-frequency-heading">Your pay schedule</h2></div><div class="field"><label for="reverse-frequency">Pay frequency</label><div class="select-field"><select id="reverse-frequency" name="reverse-frequency">${Object.entries(payFrequencyLabels).map(([key, label]) => `<option value="${key}">${label} · ${payPeriods[key as keyof typeof payPeriods]} / year</option>`).join('')}</select>${chevron}</div><p id="reverse-frequency-hint" class="field-hint"></p></div><div class="period-control"><div><label for="reverse-selectedPayPeriod">Paycheque in the year</label><p id="reverse-period-count" class="field-hint"></p></div><div class="stepper"><button type="button" id="reverse-previous-period" aria-label="Previous paycheque">−</button><input id="reverse-selectedPayPeriod" name="reverse-selectedPayPeriod" type="number" min="1" step="1" inputmode="numeric" aria-describedby="reverse-period-count"><button type="button" id="reverse-next-period" aria-label="Next paycheque">+</button></div></div><p class="schedule-note">CPP, CPP2, and EI can change when annual limits are reached. This estimate starts with no earlier earnings on January 1.</p></section>
+      ${reverseDeductionsMarkup()}<div class="input-footer"><span class="field-hint">These settings are separate from your take-home calculation.</span><button type="button" id="reverse-reset-button" class="text-button">Reset inputs</button></div>
+      </form><aside class="results-column" aria-label="Your gross-pay estimate"><div class="sticky-result"><section id="reverse-empty" class="card reverse-empty"><span class="eyebrow">START WITH YOUR GOAL</span><h2>Your gross-pay estimate</h2><p>Set your target, schedule and deductions, then select Find gross pay.</p></section><div id="reverse-result" class="reverse-output" hidden></div></div></aside></div></section>    <footer class="site-footer"><div><p>Built to bring clarity to payday.</p><span>Your inputs and calculations stay on this device. No account needed.</span></div><button id="methodology-button" class="text-button" type="button">Methodology & reference ${info}</button><p class="estimate-disclaimer">An estimate of payroll withholding. Your employer’s TD1 amounts, benefits, year-to-date earnings, and rounding can change your actual pay. Final annual income tax may differ.</p><div class="footer-status"><span id="network-status" aria-live="polite"></span><span>Manitoba · ${taxConfiguration.year}</span></div></footer>
   </main>
   <dialog id="about-dialog" aria-labelledby="about-title"><div class="dialog-header"><h2 id="about-title">About the estimate</h2><button type="button" class="icon-button close-dialog" aria-label="Close methodology">×</button></div><div class="dialog-body"><p class="dialog-intro">The same payroll rules and reference cases as CanadaPayCalculator for iPhone, available in your browser.</p><section><h3>Payroll rules</h3><dl class="simple-dl"><div><dt>Tax year</dt><dd>${taxConfiguration.year}</dd></div><div><dt>Province of employment</dt><dd>Manitoba</dd></div></dl><p>Rates checked September 30, 2026. CRA’s July update leaves Manitoba’s January payroll rules in place.</p></section><section><h3>How estimates work</h3><p>Each cheque uses CRA’s annualized withholding formulas, federal and Manitoba brackets, basic personal amounts, the Canada employment amount, and CPP and EI tax credits.</p><p>A full year of cheques is calculated in order. CPP, CPP2, and EI change as annual limits are reached. Annual take-home is the sum of those cheques; monthly take-home is that total divided by 12.</p></section><section><h3>Assumptions</h3><p>One employer, regular pensionable and insurable wages, CPP eligibility throughout the year, and basic personal tax claims. Basic personal amounts are adjusted for higher incomes.</p><p>Hourly earnings assume 52 paid weeks. Overtime hours repeat each week. Employee RPP, payroll RRSP, union dues, and authorized pre-tax deductions reduce income-tax withholding; CPP and EI still use gross wages.</p><p>Health, dental, and other after-tax deductions reduce take-home. Employer pension contributions are separate retirement savings. RRSP and pension room is not checked. Employer matching uses your configured amount; individual plan rules may differ.</p></section><section><h3>Reference paycheque</h3><p>$65,000 annual salary in Manitoba, paid semi-monthly: 24 cheques per year, with no optional deductions.</p><div id="reference-comparison"></div><p class="field-hint">The estimate column is calculated afresh using the shared payroll configuration.</p></section><section><h3>Official sources</h3><ul class="source-links" id="source-links"></ul><p>Payroll withholding can differ from your final tax assessment. Use CRA’s calculator and your employer’s records when checking an actual payment.</p></section><section><h3>Privacy & offline use</h3><p>Calculations run in your browser. Valid inputs are saved locally on this device. No salary or deduction data is sent to a server. GitHub Pages hosts the static app.</p><p>After your first visit, the app is available offline. Updates appear when you reconnect; you choose when to load them.</p></section></div><div class="dialog-footer"><button type="button" class="button button-primary close-dialog">Done</button></div></dialog>
   <dialog id="install-dialog" aria-labelledby="install-title"><div class="dialog-header"><h2 id="install-title">A little closer to payday.</h2><button type="button" class="icon-button close-dialog" aria-label="Close install guide">×</button></div><div class="dialog-body"><div class="install-app-mark">${leaf}</div><p class="dialog-intro">Keep Canada Pay on your Home Screen. Free, private, and ready when you are.</p><h3>On iPhone or iPad</h3><ol class="install-steps"><li><span>1</span><div>Open this site in <strong>Safari</strong>.</div></li><li><span>2</span><div>Tap <strong>Share</strong> <span class="share-icon" aria-hidden="true">↥</span>. If needed, open the <strong>Page Menu</strong> first.</div></li><li><span>3</span><div>Choose <strong>Add to Home Screen</strong>. Keep <strong>Open as Web App</strong> enabled if offered, then tap <strong>Add</strong>.</div></li></ol><p class="field-hint">If you do not see the option, scroll down in the Share menu or open the link directly in Safari.</p><h3>On Android or desktop</h3><button id="android-install" class="button button-primary" type="button" hidden>Install Canada Pay</button><p>Use your browser’s <strong>Install app</strong> or <strong>Add to Home Screen</strong> option. In browsers without installation support, bookmark this page.</p><p class="schedule-note">Visit once while online to make the calculator available offline.</p></div><div class="dialog-footer"><button type="button" class="button button-primary close-dialog">Got it</button></div></dialog>
@@ -157,6 +166,8 @@ app.innerHTML = `
 
 const byId = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
 const form = byId<HTMLFormElement>('input-form');
+const reverseForm = byId<HTMLFormElement>('reverse-form');
+const mobileLayout = window.matchMedia('(max-width: 680px)');
 const salaryKeys = ['annualSalary', 'hourlyRate', 'hoursPerWeek', 'overtimeHours', 'overtimeMultiplier'] as const;
 const frequencyNotes = {
   weekly: 'Once each week: 52 paycheques per year.',
@@ -205,7 +216,41 @@ function amountRow(label: string, value: Decimal, options: { deduction?: boolean
   return `<div class="amount-row${options.emphasis ? ' emphasis' : ''}${options.small ? ' small' : ''}"><dt>${label}</dt><dd>${options.deduction && !value.isZero() ? '−' : ''}${money(value)}</dd></div>`;
 }
 
+function placeTakeHomeHero(): void {
+  const hero = document.getElementById('forward-take-home');
+  const slot = byId('mobile-hero-slot');
+  if (!hero) { slot.hidden = true; return; }
+  if (mobileLayout.matches) {
+    slot.hidden = false;
+    slot.append(hero);
+  } else {
+    byId('result-content').prepend(hero);
+    slot.hidden = true;
+  }
+}
+mobileLayout.addEventListener('change', placeTakeHomeHero);
+
+function setMode(mode: 'forward' | 'reverse'): void {
+  for (const name of ['forward', 'reverse'] as const) {
+    const selected = name === mode;
+    byId(`${name}-panel`).hidden = !selected;
+    byId(`mode-${name}`).setAttribute('aria-selected', String(selected));
+    byId(`mode-${name}`).tabIndex = selected ? 0 : -1;
+  }
+}
+for (const mode of ['forward', 'reverse'] as const) {
+  byId(`mode-${mode}`).addEventListener('click', () => setMode(mode));
+  byId(`mode-${mode}`).addEventListener('keydown', event => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const next = event.key === 'Home' ? 'forward' : event.key === 'End' ? 'reverse' : mode === 'forward' ? 'reverse' : 'forward';
+    setMode(next);
+    byId(`mode-${next}`).focus();
+  });
+}
+
 function renderResults(result: PayrollResult): void {
+  byId('mobile-hero-slot').replaceChildren();
   const pay = result.currentPeriod;
   const annual = result.annual;
   let hourlyEquivalents: string;
@@ -221,10 +266,11 @@ function renderResults(result: PayrollResult): void {
     ['Health & dental', pay.health], ['Other pre-tax deduction', pay.otherPreTax], ['Other after-tax deduction', pay.otherAfterTax],
   ];
   const ratio = pay.gross.isZero() ? 0 : Math.max(0, Math.min(100, pay.net.div(pay.gross).times(100).toNumber()));
-  byId('result-content').innerHTML = `<section class="take-home-card" aria-labelledby="take-home-heading"><div class="hero-top"><span class="eyebrow">YOUR TAKE-HOME PAY</span><span class="estimate-pill">Estimate</span></div><h2 id="take-home-heading" class="hero-amount">${money(pay.net)}</h2><p class="hero-period">${payFrequencyLabels[input.frequency]} <span>· Paycheque ${pay.periodNumber} of ${payPeriods[input.frequency]}</span></p><div class="pay-bar" aria-hidden="true"><span style="width:${ratio.toFixed(2)}%"></span></div><div class="hero-comparison"><div><span>Gross per pay</span><strong>${money(pay.gross)}</strong></div><div><span>Total deductions</span><strong>${money(pay.totalDeductions)}</strong></div></div></section><section class="card breakdown-card" aria-labelledby="breakdown-heading"><div class="breakdown-heading"><h2 id="breakdown-heading">Where your pay goes</h2><span>CAD / cheque</span></div><dl>${amountRow('Gross pay', pay.gross, { emphasis: true })}${!pay.overtimeGross.isZero() ? `<div class="nested-amounts">${amountRow('Regular earnings', pay.regularGross, { small: true })}${amountRow('Overtime earnings', pay.overtimeGross, { small: true })}</div>` : ''}</dl><div class="breakdown-divider"></div><details class="tax-detail"><summary><span>Income tax</span><strong>−${money(pay.incomeTax)}</strong>${chevron}</summary><dl class="nested-amounts">${amountRow('Federal income tax', pay.federalTax, { deduction: true, small: true })}${amountRow('Manitoba income tax', pay.provincialTax, { deduction: true, small: true })}</dl></details><dl>${amountRow('CPP', pay.cpp, { deduction: true })}${!pay.cpp2.isZero() ? amountRow('CPP2', pay.cpp2, { deduction: true }) : ''}${amountRow('EI', pay.ei, { deduction: true })}</dl>${!pay.optionalDeductions.isZero() ? `<div class="breakdown-divider"></div><p class="breakdown-subheading">Your optional deductions</p><dl>${optionalRows.filter(([, amount]) => !amount.isZero()).map(([label, amount]) => amountRow(label, amount, { deduction: true })).join('')}</dl>` : ''}<div class="breakdown-divider"></div><dl>${amountRow('Take-home pay', pay.net, { emphasis: true })}</dl>${!pay.employerMatch.isZero() ? `<div class="employer-note"><dl>${amountRow('Employer pension', pay.employerMatch)}</dl><p>Added to your pension separately. Your take-home is unchanged.</p></div>` : ''}</section>`;
+  byId('result-content').innerHTML = `<section class="take-home-card" id="forward-take-home" aria-labelledby="take-home-heading"><div class="hero-top"><span class="eyebrow">YOUR TAKE-HOME PAY</span><span class="estimate-pill">Estimate</span></div><h2 id="take-home-heading" class="hero-amount">${money(pay.net)}</h2><p class="hero-period">${payFrequencyLabels[input.frequency]} <span>· Paycheque ${pay.periodNumber} of ${payPeriods[input.frequency]}</span></p><div class="pay-bar" aria-hidden="true"><span style="width:${ratio.toFixed(2)}%"></span></div><div class="hero-comparison"><div><span>Gross per pay</span><strong>${money(pay.gross)}</strong></div><div><span>Total deductions</span><strong>${money(pay.totalDeductions)}</strong></div></div></section><section class="card breakdown-card" aria-labelledby="breakdown-heading"><div class="breakdown-heading"><h2 id="breakdown-heading">Where your pay goes</h2><span>CAD / cheque</span></div><dl>${amountRow('Gross pay', pay.gross, { emphasis: true })}${!pay.overtimeGross.isZero() ? `<div class="nested-amounts">${amountRow('Regular earnings', pay.regularGross, { small: true })}${amountRow('Overtime earnings', pay.overtimeGross, { small: true })}</div>` : ''}</dl><div class="breakdown-divider"></div><details class="tax-detail"><summary><span>Income tax</span><strong>−${money(pay.incomeTax)}</strong>${chevron}</summary><dl class="nested-amounts">${amountRow('Federal income tax', pay.federalTax, { deduction: true, small: true })}${amountRow('Manitoba income tax', pay.provincialTax, { deduction: true, small: true })}</dl></details><dl>${amountRow('CPP', pay.cpp, { deduction: true })}${!pay.cpp2.isZero() ? amountRow('CPP2', pay.cpp2, { deduction: true }) : ''}${amountRow('EI', pay.ei, { deduction: true })}</dl>${!pay.optionalDeductions.isZero() ? `<div class="breakdown-divider"></div><p class="breakdown-subheading">Your optional deductions</p><dl>${optionalRows.filter(([, amount]) => !amount.isZero()).map(([label, amount]) => amountRow(label, amount, { deduction: true })).join('')}</dl>` : ''}<div class="breakdown-divider"></div><dl>${amountRow('Take-home pay', pay.net, { emphasis: true })}</dl>${!pay.employerMatch.isZero() ? `<div class="employer-note"><dl>${amountRow('Employer pension', pay.employerMatch)}</dl><p>Added to your pension separately. Your take-home is unchanged.</p></div>` : ''}</section>`;
   byId('annual-summary').innerHTML = `<div class="annual-title"><div><span class="eyebrow">THE BIGGER PICTURE</span><h2>Your year at a glance</h2></div><span class="annual-year">${result.taxYear}</span></div><div class="annual-grid"><div class="annual-overview"><p class="metric-label">Average monthly take-home</p><p class="monthly-amount">${money(result.monthlyNet)}</p><p class="field-hint">Annual take-home divided by 12. The number of paycheques in a month can vary.</p><dl>${amountRow('Annual gross income', annual.gross)}${amountRow('Annual take-home', annual.net, { emphasis: true })}</dl>${hourlyEquivalents}</div><div class="annual-deductions"><h3>Annual deductions</h3><dl>${amountRow('Income tax withheld', annual.incomeTax, { deduction: true })}${amountRow('CPP', annual.cpp, { deduction: true })}${amountRow('CPP2', annual.cpp2, { deduction: true })}${amountRow('EI', annual.ei, { deduction: true })}${amountRow('Employee retirement', annual.employeeRetirementContributions, { deduction: true })}${amountRow('Other employee deductions', annual.unionDues.plus(annual.health).plus(annual.otherPreTax).plus(annual.otherAfterTax), { deduction: true })}</dl></div><div class="annual-savings"><h3>Beyond take-home</h3><p class="metric-label">Effective deduction rate</p><p class="rate-amount">${result.effectiveDeductionRate.times(100).toFixed(1)}<span>%</span></p><p class="field-hint">Includes income tax, statutory contributions, and optional employee deductions.</p><div class="savings-note"><span class="savings-icon">${leaf}</span><div><p class="metric-label">Employer pension contribution</p><strong>${money(annual.employerMatch)}<span> / year</span></strong><p class="field-hint">Separate retirement savings, in addition to your employee contributions.</p></div></div></div></div><p class="annual-caption">A full-year forecast with the same earnings and selections all year. Income tax is payroll withholding and may differ from your final tax return.</p>`;
   byId('estimate-notes').hidden = result.warnings.length === 0;
   byId('notes-list').innerHTML = result.warnings.map(warning => `<li>${escapeHtml(warning)}</li>`).join('');
+  placeTakeHomeHero();
 }
 
 let announcementTimer: ReturnType<typeof setTimeout> | undefined;
@@ -234,6 +280,7 @@ function clearReverse(): void {
   reverseJob += 1;
   byId('reverse-result').hidden = true;
   byId('reverse-result').replaceChildren();
+  byId('reverse-empty').hidden = false;
   byId('reverse-status').textContent = 'Uses your current schedule and deductions. Select Find gross pay to update the estimate.';
   delete byId('reverse-status').dataset.state;
   byId<HTMLButtonElement>('find-gross-button').disabled = false;
@@ -262,6 +309,8 @@ function recalculate(): void {
       byId('save-status').textContent = 'Inputs are available for this session';
     }
   } catch (error) {
+    byId('mobile-hero-slot').replaceChildren();
+    byId('mobile-hero-slot').hidden = true;
     byId('result-content').hidden = true;
     byId('result-content').replaceChildren();
     byId('annual-summary').hidden = true;
@@ -278,16 +327,11 @@ form.addEventListener('submit', event => event.preventDefault());
 form.addEventListener('input', event => {
   const target = event.target;
   if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
-  if (target.id === 'targetNet' || target.id === 'targetNetBasis') {
-    clearReverse();
-    return;
-  }
   if (target.name === 'incomeType') {
     // Choosing a field alone does not change payroll rounding or the saved source.
     byId<HTMLInputElement>(target.value === 'annualSalary' ? 'annualSalary' : 'hourlyRate').focus();
     return;
   }
-  clearReverse();
   const key = target.dataset.contribution as ContributionKey | undefined;
   if (key && contributionKeys.includes(key)) {
     const contribution = input.deductions[key];
@@ -312,7 +356,6 @@ form.addEventListener('input', event => {
 });
 
 function stepPeriod(delta: number): void {
-  clearReverse();
   input.selectedPayPeriod = Math.max(1, Math.min(payPeriods[input.frequency], input.selectedPayPeriod + delta));
   byId<HTMLInputElement>('selectedPayPeriod').value = String(input.selectedPayPeriod);
   updateControlVisibility();
@@ -320,6 +363,69 @@ function stepPeriod(delta: number): void {
 }
 byId('previous-period').addEventListener('click', () => stepPeriod(-1));
 byId('next-period').addEventListener('click', () => stepPeriod(1));
+
+function updateReverseControls(): void {
+  const periods = payPeriods[reverseInput.frequency];
+  byId<HTMLInputElement>('reverse-selectedPayPeriod').max = String(periods);
+  byId('reverse-frequency-hint').textContent = frequencyNotes[reverseInput.frequency];
+  byId('reverse-period-count').textContent = `Of ${periods} paycheques · January to December`;
+  byId<HTMLButtonElement>('reverse-previous-period').disabled = reverseInput.selectedPayPeriod <= 1 || !Number.isInteger(reverseInput.selectedPayPeriod);
+  byId<HTMLButtonElement>('reverse-next-period').disabled = reverseInput.selectedPayPeriod >= periods || !Number.isInteger(reverseInput.selectedPayPeriod);
+  let enabled = 0;
+  for (const key of contributionKeys) {
+    const contribution = reverseInput.deductions[key];
+    byId(`reverse-${key}-fields`).hidden = !contribution.isEnabled;
+    byId(`reverse-${key}-unit`).textContent = contribution.mode === 'percentOfGross' ? '%' : 'CAD / pay';
+    if (contribution.isEnabled) enabled += 1;
+  }
+  byId('reverse-deductions-count').textContent = enabled === 0 ? 'Optional' : `${enabled} enabled`;
+}
+
+function populateReverseControls(): void {
+  byId<HTMLSelectElement>('reverse-frequency').value = reverseInput.frequency;
+  byId<HTMLInputElement>('reverse-selectedPayPeriod').value = String(reverseInput.selectedPayPeriod);
+  for (const key of contributionKeys) {
+    byId<HTMLInputElement>(`reverse-${key}-enabled`).checked = reverseInput.deductions[key].isEnabled;
+    byId<HTMLSelectElement>(`reverse-${key}-mode`).value = reverseInput.deductions[key].mode;
+    byId<HTMLInputElement>(`reverse-${key}-amount`).value = reverseInput.deductions[key].amount;
+  }
+  updateReverseControls();
+}
+
+reverseForm.addEventListener('submit', event => event.preventDefault());
+reverseForm.addEventListener('input', event => {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+  clearReverse();
+  const key = target.dataset.contribution as ContributionKey | undefined;
+  if (key && contributionKeys.includes(key)) {
+    const contribution = reverseInput.deductions[key];
+    if (target.dataset.property === 'isEnabled' && target instanceof HTMLInputElement) contribution.isEnabled = target.checked;
+    else if (target.dataset.property === 'mode') contribution.mode = target.value as typeof contribution.mode;
+    else if (target.dataset.property === 'amount') contribution.amount = target.value.replace(/,/g, '').trim();
+  } else if (target.id === 'reverse-frequency') {
+    reverseInput.frequency = target.value as PayrollInput['frequency'];
+    reverseInput.selectedPayPeriod = Number.isInteger(reverseInput.selectedPayPeriod) ? Math.max(1, Math.min(reverseInput.selectedPayPeriod, payPeriods[reverseInput.frequency])) : 1;
+    byId<HTMLInputElement>('reverse-selectedPayPeriod').value = String(reverseInput.selectedPayPeriod);
+  } else if (target.id === 'reverse-selectedPayPeriod') reverseInput.selectedPayPeriod = target.value === '' ? NaN : Number(target.value);
+  updateReverseControls();
+});
+for (const [id, delta] of [['reverse-previous-period', -1], ['reverse-next-period', 1]] as const) {
+  byId(id).addEventListener('click', () => {
+    clearReverse();
+    reverseInput.selectedPayPeriod = Math.max(1, Math.min(payPeriods[reverseInput.frequency], reverseInput.selectedPayPeriod + delta));
+    byId<HTMLInputElement>('reverse-selectedPayPeriod').value = String(reverseInput.selectedPayPeriod);
+    updateReverseControls();
+  });
+}
+byId('reverse-reset-button').addEventListener('click', () => {
+  reverseInput = defaultInput();
+  byId<HTMLInputElement>('targetNet').value = '';
+  byId<HTMLSelectElement>('targetNetBasis').value = 'perPay';
+  byId<HTMLDetailsElement>('reverse-deductions-details').open = false;
+  populateReverseControls();
+  clearReverse();
+});
 
 byId('find-gross-button').addEventListener('click', async () => {
   clearReverse();
@@ -334,15 +440,12 @@ byId('find-gross-button').addEventListener('click', async () => {
   await new Promise(resolve => setTimeout(resolve, 0));
   if (job !== reverseJob) return;
   try {
-    const solution = solveGrossForNet(input, target, basis);
-    input.annualSalary = solution.annualSalary.toFixed();
-    input.incomeType = 'annualSalary';
-    populateControls();
-    recalculate();
-    const label = basis === 'annual' ? 'per year' : basis === 'monthly' ? 'per average month' : `for paycheque ${input.selectedPayPeriod} of ${payPeriods[input.frequency]}`;
-    byId('reverse-result').innerHTML = `<dl>${amountRow('Estimated annual gross salary', solution.annualSalary, { emphasis: true })}${amountRow('Target take-home', solution.targetNet)}${amountRow('Estimated take-home', solution.achievedNet, { emphasis: true })}</dl><p class="field-hint">Take-home amounts are ${label}. This salary has been applied above. The estimate is within $0.01 of your target; cent rounding and payroll limits can prevent an exact match.</p>`;
+    const solution = solveGrossForNet(reverseInput, target, basis);
+    const label = basis === 'annual' ? 'per year' : basis === 'monthly' ? 'per average month' : `for paycheque ${reverseInput.selectedPayPeriod} of ${payPeriods[reverseInput.frequency]}`;
+    byId('reverse-result').innerHTML = `<section class="take-home-card" aria-labelledby="reverse-gross-heading"><div class="hero-top"><span class="eyebrow">ESTIMATED GROSS SALARY</span><span class="estimate-pill">Estimate</span></div><h2 id="reverse-gross-heading" class="hero-amount">${money(solution.annualSalary)}</h2><p class="hero-period">Per year <span>· ${payFrequencyLabels[reverseInput.frequency]}</span></p><div class="hero-comparison"><div><span>Gross per pay</span><strong id="reverse-period-gross">${money(solution.result.currentPeriod.gross)}</strong></div><div><span>Estimated take-home</span><strong id="reverse-achieved-net">${money(solution.achievedNet)}</strong></div></div></section><section class="card breakdown-card"><div class="breakdown-heading"><h2>Target comparison</h2></div><dl>${amountRow('Estimated annual gross salary', solution.annualSalary, { emphasis: true })}${amountRow('Target take-home', solution.targetNet)}${amountRow('Estimated take-home', solution.achievedNet, { emphasis: true })}</dl><p class="field-hint">Take-home amounts are ${label}. The estimate is within $0.01 of your target; cent rounding and payroll limits can prevent an exact match.</p><p class="field-hint">Your take-home calculation has not been changed.</p></section>`;
+    byId('reverse-empty').hidden = true;
     byId('reverse-result').hidden = false;
-    status.textContent = 'Estimate found and applied to your income.';
+    status.textContent = 'Gross-pay estimate found.';
     status.dataset.state = 'success';
   } catch (error) {
     byId('reverse-result').hidden = true;
@@ -368,9 +471,6 @@ byId('about-button').addEventListener('click', () => aboutDialog.showModal());
 byId('methodology-button').addEventListener('click', () => aboutDialog.showModal());
 byId('reset-button').addEventListener('click', () => byId<HTMLDialogElement>('reset-dialog').showModal());
 byId('confirm-reset').addEventListener('click', () => {
-  clearReverse();
-  byId<HTMLInputElement>('targetNet').value = '';
-  byId<HTMLSelectElement>('targetNetBasis').value = 'perPay';
   input = defaultInput();
   byId<HTMLDetailsElement>('deductions-details').open = false;
   form.querySelector<HTMLDetailsElement>('.overtime-details')!.open = false;
@@ -390,6 +490,7 @@ byId('source-links').innerHTML = taxConfiguration.sourceURLs.map(source => {
   return `<li><a href="${escapeHtml(source)}" target="_blank" rel="noopener noreferrer">${title}<span aria-hidden="true"> ↗</span><span class="visually-hidden"> (opens in a new tab)</span></a></li>`;
 }).join('') + '<li><a href="https://www.canada.ca/en/revenue-agency/services/e-services/digital-services-businesses/payroll-deductions-online-calculator.html" target="_blank" rel="noopener noreferrer">CRA Payroll Deductions Online Calculator<span aria-hidden="true"> ↗</span><span class="visually-hidden"> (opens in a new tab)</span></a></li>';
 populateControls();
+populateReverseControls();
 recalculate();
 initPwa();
 initI18n();

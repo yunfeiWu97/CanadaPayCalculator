@@ -105,17 +105,27 @@ test('salary and hourly earnings remain visible and update each other without en
   await expect(page.locator('#take-home-heading')).toHaveText('$2,034.56');
 });
 
-test('a take-home target estimates and applies gross pay, and invalid targets clear the reverse result', async ({ page }) => {
+test('the reverse calculator has independent inputs and results, and invalid targets clear its result', async ({ page }) => {
   await page.goto('./');
   await page.locator('#annualSalary').fill('50000');
+  const forwardTakeHome = await page.locator('#take-home-heading').textContent();
+  await page.locator('#mode-reverse').click();
+  await expect(page.locator('#forward-panel')).toBeHidden();
+  await expect(page.locator('#reverse-panel')).toBeVisible();
   await page.locator('#targetNetBasis').selectOption('perPay');
   await page.locator('#targetNet').fill('2034.56');
   await page.locator('#find-gross-button').click();
   await expect(page.locator('#reverse-status')).toHaveAttribute('data-state', 'success');
   await expect(page.locator('#reverse-result')).toBeVisible();
   await expect(page.locator('#reverse-result')).toContainText('$2,034.56');
-  await expect(page.locator('#take-home-heading')).toHaveText('$2,034.56');
-  await expect(page.locator('#hourlyRate')).toBeVisible();
+  await expect(page.locator('#reverse-gross-heading')).toBeVisible();
+  await page.locator('#mode-forward').click();
+  await expect(page.locator('#annualSalary')).toHaveValue('50000');
+  await expect(page.locator('#take-home-heading')).toHaveText(forwardTakeHome!);
+  await page.locator('#frequency').selectOption('weekly');
+  await page.locator('#mode-reverse').click();
+  await expect(page.locator('#reverse-frequency')).toHaveValue('semiMonthly');
+  await expect(page.locator('#reverse-result')).toBeVisible();
   await page.locator('#targetNet').fill('invalid');
   await expect(page.locator('#reverse-result')).toBeHidden();
   await page.locator('#find-gross-button').click();
@@ -131,15 +141,19 @@ test('Simplified Chinese persists, explains payroll concepts on hover/focus, and
   await expect(page.locator('label[for="annualSalary"]')).toContainText('年薪');
   await expect(page.locator('#take-home-heading')).toHaveText('$2,034.56');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  const cppHelp = page.locator('.concept-help[data-concept="cpp"]').first();
-  await cppHelp.hover();
+  await page.locator('#deductions-details > summary').click();
+  await expect(page.locator('#deductions-details .concept-help')).toHaveCount(7);
+  expect(await page.locator('.concept-help').evaluateAll(buttons => buttons.every(button => button.closest('.deductions-body')))).toBe(true);
+  await expect(page.locator('.concept-help[data-concept="cpp"]')).toHaveCount(0);
+  const pensionHelp = page.locator('#deductions-details .concept-help[data-concept="pension"]').first();
+  await pensionHelp.hover();
   await expect(page.locator('#concept-tooltip')).toBeVisible();
   await expect(page.locator('#concept-tooltip')).toContainText('退休');
   await page.evaluate(() => window.dispatchEvent(new Event('scroll')));
   await expect(page.locator('#concept-tooltip')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.locator('#concept-tooltip')).toBeHidden();
-  await cppHelp.focus();
+  await pensionHelp.focus();
   await expect(page.locator('#concept-tooltip')).toBeVisible();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
@@ -151,4 +165,24 @@ test('Simplified Chinese persists, explains payroll concepts on hover/focus, and
   await expect(page.locator('#annualSalary')).toHaveValue('65000');
   await expect(page.locator('#take-home-heading')).toHaveText('$2,034.56');
   await expect(page.locator('.concept-help')).toHaveCount(0);
+});
+
+test('the phone places its single take-home card after income and returns it to the desktop results column', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('./');
+  await expect(page.locator('#mobile-hero-slot #forward-take-home')).toHaveCount(1);
+  const income = await page.locator('#income-card').boundingBox();
+  const hero = await page.locator('#forward-take-home').boundingBox();
+  const schedule = await page.locator('[aria-labelledby="frequency-heading"]').boundingBox();
+  expect(hero!.y).toBeGreaterThanOrEqual(income!.y + income!.height);
+  expect(hero!.y + hero!.height).toBeLessThanOrEqual(schedule!.y);
+  await expect(page.locator('#take-home-heading')).toHaveCount(1);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expect(page.locator('#result-content #forward-take-home')).toHaveCount(1);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator('#mobile-hero-slot #forward-take-home')).toHaveCount(1);
+  await page.locator('#annualSalary').fill('');
+  await expect(page.locator('#take-home-heading')).toHaveCount(0);
+  await page.locator('#annualSalary').fill('65000');
+  await expect(page.locator('#mobile-hero-slot #take-home-heading')).toHaveText('$2,034.56');
 });
